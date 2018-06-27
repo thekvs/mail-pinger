@@ -46,7 +46,13 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
         };
 
         let ssl_connector = TlsConnector::builder().unwrap().build().unwrap();
-        let mut conn = Client::secure_connect(addr, addr.0, &ssl_connector).unwrap();
+        let mut conn = match Client::secure_connect(addr, addr.0, &ssl_connector) {
+            Ok(c) => c,
+            Err(err) => {
+                error!("couldn't connect to {}: {}", server, err);
+                process::exit(-1);
+            }
+        };
 
         if let Err(err) = conn.login(user, password) {
             error!("login error for {}: {:?}", user, err);
