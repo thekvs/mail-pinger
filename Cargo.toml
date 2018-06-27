@@ -1,0 +1,14 @@
+[package]
+name = "mail-pinger"
+version = "0.1.0"
+authors = ["Konstantin Sorokin <kvs@sigterm.ru>"]
+
+[dependencies]
+clap = "2.31"
+serde = "1.0"
+serde_derive = "1.0"
+serde_yaml = "0.7"
+imap = "0.8.*"
+native-tls = "0.1.*"
+log = "*"
+env_logger = "*"
