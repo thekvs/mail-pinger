@@ -14,6 +14,8 @@ use imap::client::Client;
 use native_tls::TlsConnector;
 use std::{env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process};
 
+const DEFAULT_IMAP_PORT: u16 = 993;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ConfigEntry {
     server: String,
@@ -38,7 +40,7 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
 
         let addr = match items.len() {
             2 => (items[0], items[1].parse::<u16>().unwrap()),
-            1 => (items[0], 993),
+            1 => (items[0], DEFAULT_IMAP_PORT),
             _ => {
                 error!(
                     "invalid format for 'server' configuration entry: {}",
@@ -92,7 +94,13 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
             _ => (),
         };
 
-        conn.logout().unwrap();
+        match conn.logout() {
+            Err(err) => {
+                error!("logout error for {}: {}", user, err);
+                process::exit(-1);
+            }
+            _ => (),
+        }
     }
 }
 
