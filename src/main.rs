@@ -96,14 +96,6 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
     }
 }
 
-fn perms(config_file: &str) -> std::io::Result<()> {
-    let meta = std::fs::metadata(config_file)?;
-    let perm = meta.permissions();
-    println!("{:?}", perm);
-    println!("{:o}", perm.mode());
-    Ok(())
-}
-
 fn main() {
     env_logger::init();
 
