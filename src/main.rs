@@ -34,24 +34,19 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
         let user = e.user.as_str();
         let password = e.password.as_str();
 
-        let mut port: u16 = 993;
-        let domain: &str;
-
         let items: Vec<&str> = server.splitn(2, ':').collect();
 
-        if items.len() == 2 {
-            port = items[1].parse::<u16>().unwrap();
-            domain = items[0];
-        } else if items.len() == 1 {
-            domain = items[0];
-        } else {
-            error!("invalid format for 'server' configuration entry: {}", server);
-            process::exit(-1);
-        }
+        let addr = match items.len() {
+            2 => (items[0], items[1].parse::<u16>().unwrap()),
+            1 => (items[0], 993),
+            _ => {
+                error!("invalid format for 'server' configuration entry: {}", server);
+                process::exit(-1);
+            }
+        };
 
-        let addr = (domain, port);
         let ssl_connector = TlsConnector::builder().unwrap().build().unwrap();
-        let mut conn = Client::secure_connect(addr, domain, &ssl_connector).unwrap();
+        let mut conn = Client::secure_connect(addr, addr.0, &ssl_connector).unwrap();
 
         if let Err(err) = conn.login(user, password) {
             error!("login error for {}: {:?}", user, err);
