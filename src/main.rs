@@ -69,19 +69,27 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
                 }
             }
             Err(e) => {
-                error!("Error parsing capabilities: {}", e);
+                error!("error parsing capabilities: {}", e);
                 process::exit(-1);
             }
         };
 
         match conn.select("INBOX") {
             Ok(mailbox) => {
-                debug!("{}", mailbox);
+                debug!("selected INBOX. {}", mailbox);
             }
             Err(e) => {
-                error!("Error selecting INBOX: {}", e);
+                error!("error selecting INBOX: {}", e);
                 process::exit(-1);
             }
+        };
+
+        match conn.noop() {
+            Err(err) => {
+                error!("'noop' command failed: {}", err);
+                process::exit(-1);
+            }
+            _ => (),
         };
 
         conn.logout().unwrap();
