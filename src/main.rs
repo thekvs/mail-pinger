@@ -125,19 +125,22 @@ fn main() {
         }
     };
 
-    if let Ok(meta) = std::fs::metadata(&config_file) {
-        let mode = meta.permissions().mode();
-        // FIXME: use constants
-        if mode & (00040 | 00020 | 00010 | 00004 | 00002 | 00001) > 0 {
-            error!(
-                "config file '{}' has invalid permission, must be '-rw-------'",
-                config_file
-            );
+    match std::fs::metadata(&config_file) {
+        Ok(meta) => {
+            let mode = meta.permissions().mode();
+            // FIXME: use constants
+            if mode & (00040 | 00020 | 00010 | 00004 | 00002 | 00001) > 0 {
+                error!(
+                    "config file '{}' has invalid permission, must be '-rw-------'",
+                    config_file
+                );
+                process::exit(-1);
+            };
+        }
+        Err(err) => {
+            error!("couldn't get config file's metadata: {}", err);
             process::exit(-1);
         }
-    } else {
-        error!("couldn't get config file's metadata");
-        process::exit(-1);
     };
 
     match read_config_file(config_file.as_str()) {
