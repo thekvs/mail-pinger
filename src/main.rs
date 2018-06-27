@@ -40,7 +40,10 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
             2 => (items[0], items[1].parse::<u16>().unwrap()),
             1 => (items[0], 993),
             _ => {
-                error!("invalid format for 'server' configuration entry: {}", server);
+                error!(
+                    "invalid format for 'server' configuration entry: {}",
+                    server
+                );
                 process::exit(-1);
             }
         };
