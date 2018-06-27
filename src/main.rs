@@ -12,7 +12,7 @@ extern crate serde_yaml;
 use clap::{App, Arg};
 use imap::client::Client;
 use native_tls::TlsConnector;
-use std::{env, error::Error, fs::File, path::Path, process};
+use std::{env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ConfigEntry {
@@ -96,6 +96,14 @@ fn mail_stat(cfg: &Vec<ConfigEntry>) {
     }
 }
 
+fn perms(config_file: &str) -> std::io::Result<()> {
+    let meta = std::fs::metadata(config_file)?;
+    let perm = meta.permissions();
+    println!("{:?}", perm);
+    println!("{:o}", perm.mode());
+    Ok(())
+}
+
 fn main() {
     env_logger::init();
 
@@ -123,6 +131,21 @@ fn main() {
                 process::exit(-1);
             }
         }
+    };
+
+    if let Ok(meta) = std::fs::metadata(&config_file) {
+        let mode = meta.permissions().mode();
+        // FIXME: use constants
+        if mode & (00040 | 00020 | 00010 | 00004 | 00002 | 00001) > 0 {
+            error!(
+                "config file '{}' has invalid permission, must be '-rw-------'",
+                config_file
+            );
+            process::exit(-1);
+        }
+    } else {
+        error!("couldn't get config file's metadata");
+        process::exit(-1);
     };
 
     match read_config_file(config_file.as_str()) {
