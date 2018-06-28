@@ -30,7 +30,7 @@ fn read_config_file<P: AsRef<Path>>(path: P) -> Result<Vec<ConfigEntry>, Box<Err
     Ok(cfg)
 }
 
-fn mail_stat(cfg: &Vec<ConfigEntry>) {
+fn ping(cfg: &Vec<ConfigEntry>) {
     for e in cfg.iter() {
         let server = e.server.as_str();
         let user = e.user.as_str();
@@ -152,7 +152,7 @@ fn main() {
     };
 
     match read_config_file(config_file.as_str()) {
-        Ok(config) => mail_stat(&config),
+        Ok(config) => ping(&config),
         Err(err) => {
             error!(
                 "Error occured while reading '{}' configuration file: {}",
