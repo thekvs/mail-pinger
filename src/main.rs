@@ -44,7 +44,7 @@ fn ping(cfg: &Vec<ConfigEntry>) {
                     (items[0], port)
                 } else {
                     error!("invalid port format: {}", server);
-                    process::exit(-1);
+                    continue;
                 }
             }
             1 => (items[0], DEFAULT_IMAP_PORT),
@@ -53,7 +53,7 @@ fn ping(cfg: &Vec<ConfigEntry>) {
                     "invalid format for 'server' configuration entry: {}",
                     server
                 );
-                process::exit(-1);
+                continue;
             }
         };
 
@@ -62,13 +62,13 @@ fn ping(cfg: &Vec<ConfigEntry>) {
             Ok(c) => c,
             Err(err) => {
                 error!("couldn't connect to {}: {}", server, err);
-                process::exit(-1);
+                continue;
             }
         };
 
         if let Err(err) = conn.login(user, password) {
             error!("login error for {}: {:?}", user, err);
-            process::exit(-1);
+            continue;
         }
 
         match conn.capabilities() {
@@ -79,7 +79,7 @@ fn ping(cfg: &Vec<ConfigEntry>) {
             }
             Err(e) => {
                 error!("error parsing capabilities: {}", e);
-                process::exit(-1);
+                continue;
             }
         };
 
@@ -89,14 +89,14 @@ fn ping(cfg: &Vec<ConfigEntry>) {
             }
             Err(e) => {
                 error!("error selecting INBOX: {}", e);
-                process::exit(-1);
+                continue;
             }
         };
 
         match conn.noop() {
             Err(err) => {
                 error!("'noop' command failed: {}", err);
-                process::exit(-1);
+                continue;
             }
             _ => (),
         };
@@ -104,7 +104,7 @@ fn ping(cfg: &Vec<ConfigEntry>) {
         match conn.logout() {
             Err(err) => {
                 error!("logout error for {}: {}", user, err);
-                process::exit(-1);
+                continue;
             }
             _ => (),
         }
