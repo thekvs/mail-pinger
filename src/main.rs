@@ -127,7 +127,7 @@ fn main() {
         match env::var("HOME") {
             Ok(v) => config_file = format!("{}/.config/mail-pinger/config.yaml", v),
             Err(e) => {
-                error!("Error: {:?}", e);
+                error!("error getting env. variable $HOME: {:?}", e);
                 process::exit(-1);
             }
         }
