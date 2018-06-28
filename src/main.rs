@@ -155,7 +155,7 @@ fn main() {
         Ok(config) => ping(&config),
         Err(err) => {
             error!(
-                "Error occured while reading '{}' configuration file: {}",
+                "error occured while reading '{}' configuration file: {}",
                 config_file, err
             );
             process::exit(-1);
