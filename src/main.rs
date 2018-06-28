@@ -146,7 +146,10 @@ fn main() {
             };
         }
         Err(err) => {
-            error!("couldn't get config file's metadata: {}", err);
+            error!(
+                "couldn't get config file's '{}' metadata: {}",
+                config_file, err
+            );
             process::exit(-1);
         }
     };
