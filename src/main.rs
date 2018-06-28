@@ -39,7 +39,14 @@ fn ping(cfg: &Vec<ConfigEntry>) {
         let items: Vec<&str> = server.splitn(2, ':').collect();
 
         let addr = match items.len() {
-            2 => (items[0], items[1].parse::<u16>().unwrap()),
+            2 => {
+                if let Ok(port) = items[1].parse::<u16>() {
+                    (items[0], port)
+                } else {
+                    error!("invalid port format: {}", server);
+                    process::exit(-1);
+                }
+            }
             1 => (items[0], DEFAULT_IMAP_PORT),
             _ => {
                 error!(
