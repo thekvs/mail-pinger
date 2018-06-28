@@ -30,7 +30,9 @@ fn read_config_file<P: AsRef<Path>>(path: P) -> Result<Vec<ConfigEntry>, Box<Err
     Ok(cfg)
 }
 
-fn ping(cfg: &Vec<ConfigEntry>) {
+fn ping(cfg: &Vec<ConfigEntry>) -> usize {
+    let mut processed: usize = 0;
+
     for e in cfg.iter() {
         let server = e.server.as_str();
         let user = e.user.as_str();
@@ -108,7 +110,11 @@ fn ping(cfg: &Vec<ConfigEntry>) {
             }
             _ => (),
         }
+
+        processed += 1;
     }
+
+    processed
 }
 
 fn main() {
@@ -162,7 +168,14 @@ fn main() {
     };
 
     match read_config_file(config_file.as_str()) {
-        Ok(config) => ping(&config),
+        Ok(config) => {
+            let processed = ping(&config);
+            println!(
+                "succesfully processed {} entries out of {}",
+                processed,
+                config.len()
+            );
+        }
         Err(err) => {
             error!(
                 "error occured while reading '{}' configuration file: {}",
