@@ -1,4 +1,7 @@
-To run with debug logging: `RUST_LOG=DEBUG ./target/debug/mail-pinger -c /path/to/config.yaml`
+## Usage
+
+1. To run with debug logging enabled and custom configuration file: `RUST_LOG=DEBUG ./target/debug/mail-pinger -c /path/to/config.yaml`
+1. To run with default (`$HOME/.config/mail-pinger/config.yaml`) configuration file: `./target/debug/mail-pinger`
 
 ## Configuration file example
 
