@@ -5,6 +5,7 @@ extern crate env_logger;
 #[macro_use]
 extern crate log;
 extern crate imap;
+extern crate libc;
 extern crate native_tls;
 extern crate serde;
 extern crate serde_yaml;
@@ -148,9 +149,14 @@ fn main() {
 
     match std::fs::metadata(&config_file) {
         Ok(meta) => {
-            let mode = meta.permissions().mode();
-            // FIXME: use constants
-            if mode & (00040 | 00020 | 00010 | 00004 | 00002 | 00001) > 0 {
+            if meta.permissions().mode()
+                & (libc::S_IRGRP
+                    | libc::S_IWGRP
+                    | libc::S_IXGRP
+                    | libc::S_IROTH
+                    | libc::S_IWOTH
+                    | libc::S_IXOTH) > 0
+            {
                 error!(
                     "config file '{}' has invalid permission, must be '-rw-------'",
                     config_file
