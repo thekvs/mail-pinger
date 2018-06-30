@@ -31,7 +31,7 @@ fn read_config_file<P: AsRef<Path>>(path: P) -> Result<Vec<ConfigEntry>, Box<Err
     Ok(cfg)
 }
 
-fn ping(cfg: &Vec<ConfigEntry>) -> usize {
+fn ping(cfg: &[ConfigEntry]) -> usize {
     let mut processed: usize = 0;
 
     for e in cfg.iter() {
@@ -96,20 +96,14 @@ fn ping(cfg: &Vec<ConfigEntry>) -> usize {
             }
         };
 
-        match conn.noop() {
-            Err(err) => {
-                error!("'noop' command failed: {}", err);
-                continue;
-            }
-            _ => (),
+        if let Err(err) = conn.noop() {
+            error!("'noop' command failed: {}", err);
+            continue;
         };
 
-        match conn.logout() {
-            Err(err) => {
-                error!("logout error for {}: {}", user, err);
-                continue;
-            }
-            _ => (),
+        if let Err(err) = conn.logout() {
+            error!("logout error for {}: {}", user, err);
+            continue;
         }
 
         processed += 1;
