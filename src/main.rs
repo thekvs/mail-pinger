@@ -109,27 +109,21 @@ fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
         Some(pos) => {
             if hostport.chars().nth(0) == Some('[') {
                 match hostport.rfind(']') {
-                    Some(end) if end + 1 == hostport.len() => return Err("missing port"),
-                    Some(end) if end + 1 == pos => {
-                        let host = &hostport[1..end];
-                        let port = &hostport[end + 2..];
-                        return Ok((host, port));
-                    }
-                    Some(end) => {
-                        if hostport.chars().nth(end + 1) == Some(':') {
-                            return Err("too many colons in address");
-                        };
-                        return Err("missing port");
-                    }
-                    None => return Err("missing ']' in address"),
-                };
+                    Some(end) if end + 1 == hostport.len() => Err("missing port"),
+                    Some(end) if end + 1 == pos => Ok((&hostport[1..end], &hostport[end + 2..])),
+                    Some(end) => if hostport.chars().nth(end + 1) == Some(':') {
+                        Err("too many colons in address")
+                    } else {
+                        Err("missing port")
+                    },
+                    None => Err("missing ']' in address"),
+                }
             } else {
                 let host = &hostport[0..pos];
-                if None == host.find(':') {
-                    let port = &hostport[pos + 1..];
-                    return Ok((host, port));
+                match host.find(':') {
+                    None => Ok((host, &hostport[pos + 1..])),
+                    _ => Err("too many colons in address"),
                 }
-                return Err("too many colons in address");
             }
         }
         None => Err("missing port in address"),
