@@ -105,7 +105,7 @@ fn ping(cfg: &[ConfigEntry]) -> usize {
 }
 
 fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
-    let res = match hostport.rfind(':') {
+    match hostport.rfind(':') {
         Some(pos) => {
             if hostport.chars().nth(0) == Some('[') {
                 match hostport.rfind(']') {
@@ -133,9 +133,7 @@ fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
             }
         }
         None => Err("missing port in address"),
-    };
-
-    res
+    }
 }
 
 fn main() {
