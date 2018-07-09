@@ -15,8 +15,6 @@ use imap::client::Client;
 use native_tls::TlsConnector;
 use std::{env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process};
 
-const DEFAULT_IMAP_PORT: u16 = 993;
-
 #[derive(Debug, Serialize, Deserialize)]
 struct ConfigEntry {
     server: String,
@@ -39,23 +37,17 @@ fn ping(cfg: &[ConfigEntry]) -> usize {
         let user = e.user.as_str();
         let password = e.password.as_str();
 
-        let items: Vec<&str> = server.splitn(2, ':').collect();
-
-        let addr = match items.len() {
-            2 => {
-                if let Ok(port) = items[1].parse::<u16>() {
-                    (items[0], port)
+        let addr = match split_host_port(server) {
+            Ok((host, port)) => {
+                if let Ok(port) = port.parse::<u16>() {
+                    (host, port)
                 } else {
                     error!("invalid port format: {}", server);
                     continue;
                 }
             }
-            1 => (items[0], DEFAULT_IMAP_PORT),
-            _ => {
-                error!(
-                    "invalid format for 'server' configuration entry: {}",
-                    server
-                );
+            Err(err) => {
+                error!("invalid server '{}' format: {}", server, err);
                 continue;
             }
         };
@@ -110,6 +102,40 @@ fn ping(cfg: &[ConfigEntry]) -> usize {
     }
 
     processed
+}
+
+fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
+    let res = match hostport.rfind(':') {
+        Some(pos) => {
+            if hostport.chars().nth(0) == Some('[') {
+                match hostport.rfind(']') {
+                    Some(end) if end + 1 == hostport.len() => return Err("missing port"),
+                    Some(end) if end + 1 == pos => {
+                        let host = &hostport[1..end];
+                        let port = &hostport[end + 2..];
+                        return Ok((host, port));
+                    }
+                    Some(end) => {
+                        if hostport.chars().nth(end + 1) == Some(':') {
+                            return Err("too many colons in address");
+                        };
+                        return Err("missing port");
+                    }
+                    None => return Err("missing ']' in address"),
+                };
+            } else {
+                let host = &hostport[0..pos];
+                if None == host.find(':') {
+                    let port = &hostport[pos + 1..];
+                    return Ok((host, port));
+                }
+                return Err("too many colons in address");
+            }
+        }
+        None => Err("missing port in address"),
+    };
+
+    res
 }
 
 fn main() {
