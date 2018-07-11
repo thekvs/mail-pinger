@@ -145,13 +145,11 @@ fn main() {
         )
         .get_matches();
 
-    let config_file: String;
-
-    if matches.is_present("config") {
-        config_file = matches.value_of("config").unwrap().to_string();
+    let config_file = if matches.is_present("config") {
+        matches.value_of("config").unwrap().to_string()
     } else {
         match env::var("HOME") {
-            Ok(v) => config_file = format!("{}/.config/mail-pinger/config.yaml", v),
+            Ok(v) => format!("{}/.config/mail-pinger/config.yaml", v),
             Err(e) => {
                 error!("error getting env. variable $HOME: {:?}", e);
                 process::exit(-1);
