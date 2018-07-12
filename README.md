@@ -1,3 +1,10 @@
+## About
+
+Keep not frequently used email accounts alive by periodically using mailboxes through IMAP protocol.
+
+Some public email services will close your account if you don't use it for a long time. This simple program allows you to simulate some
+(fake) activity on your account via IMAP protocol.
+
 ## Usage
 
 1. To run with debug logging enabled and custom configuration file: `RUST_LOG=DEBUG ./target/debug/mail-pinger -c /path/to/config.yaml`
@@ -8,9 +15,9 @@
 ```yaml
 - server: imap.mail.ru:993
   user: vasya@mail.ru
-  password: fsdsf
+  password: coolpassword1
 - server: imap.yandex.ru:993
   user: petya@yandex.ru
-  password: fsdfsfsf
+  password: anothercollpassword
 
 ```
