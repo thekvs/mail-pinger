@@ -10,7 +10,7 @@ Some public email services will close your account if you don't use it for a lon
 1. To run with debug logging enabled and custom configuration file: `RUST_LOG=DEBUG ./target/debug/mail-pinger -c /path/to/config.yaml`
 1. To run with default (`$HOME/.config/mail-pinger/config.yaml`) configuration file: `./target/debug/mail-pinger`
 
-## Configuration file example
+### Configuration file example
 
 ```yaml
 - server: imap.mail.ru:993
