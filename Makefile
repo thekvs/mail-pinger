@@ -31,6 +31,7 @@ build: check_env
 deb: clean build
 	mkdir -p $(INSTALLDIR)/usr/local/bin/
 	cp -a ./target/release/mail-pinger $(INSTALLDIR)/usr/local/bin/
+	strip --strip-all $(INSTALLDIR)/usr/local/bin/mail-pinger
 	fpm --input-type dir \
 		--output-type deb \
 		--name "mail-pinger" \
