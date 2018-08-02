@@ -31,10 +31,12 @@ build: check_env
 deb: clean build
 	mkdir -p $(INSTALLDIR)/usr/local/bin/
 	cp -a ./target/release/mail-pinger $(INSTALLDIR)/usr/local/bin/
-	fpm -s dir -t deb -n "mail-pinger" \
+	fpm --input-type dir \
+		--output-type deb \
+		--name "mail-pinger" \
 		--version $(VERSION).$(PATCH)+$(LAST_GIT_COMMIT) \
 		--description "Mail pinger" \
 		--deb-compression xz \
 		--maintainer "Konstantin Sorokin <kvs@sigterm.ru>" \
-		-C $(INSTALLDIR)
+		--chdir $(INSTALLDIR)
 	rm -rf $(INSTALLDIR)
