@@ -27,4 +27,4 @@ Some public email services will close your account if you don't use it for a lon
 You need to have Rust ecosystem installed.
 
 * `cargo build` or `cargo build --release` to build a binary.
-* `make` to build a binary **and** package it in deb format.
+* `make` to build a binary **and** package it in the `.deb` format (you'll need [fpm](https://github.com/jordansissel/fpm) utility installed).
