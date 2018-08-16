@@ -9,99 +9,74 @@ extern crate libc;
 extern crate native_tls;
 extern crate serde;
 extern crate serde_yaml;
+extern crate threadpool;
 
 use clap::{App, Arg};
 use imap::client::Client;
 use native_tls::TlsConnector;
-use std::{env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process, sync::Arc,
+};
+use threadpool::ThreadPool;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct ConfigEntry {
     server: String,
     user: String,
     password: String,
 }
 
-fn read_config_file<P: AsRef<Path>>(path: P) -> Result<Vec<ConfigEntry>, Box<Error>> {
+fn read_config_file<P>(path: P) -> Result<Vec<ConfigEntry>, Box<Error>>
+where
+    P: AsRef<Path>,
+{
     let file = File::open(path)?;
     let cfg = serde_yaml::from_reader(file)?;
 
     Ok(cfg)
 }
 
-fn ping(cfg: &[ConfigEntry]) -> usize {
-    let mut processed: usize = 0;
+fn ping_single(e: &ConfigEntry) -> Result<(), Box<Error>> {
+    let server = e.server.as_str();
+    let user = e.user.as_str();
+    let password = e.password.as_str();
 
-    for e in cfg.iter() {
-        let server = e.server.as_str();
-        let user = e.user.as_str();
-        let password = e.password.as_str();
+    let (host, port) = split_host_port(server)?;
+    let port = port.parse::<u16>()?;
+    let addr = (host, port);
 
-        let addr = match split_host_port(server) {
-            Ok((host, port)) => {
-                if let Ok(port) = port.parse::<u16>() {
-                    (host, port)
-                } else {
-                    error!("invalid port format: {}", server);
-                    continue;
-                }
+    let ssl_connector = TlsConnector::builder().unwrap().build().unwrap();
+    let mut conn = Client::secure_connect(addr, addr.0, &ssl_connector)?;
+
+    conn.login(user, password)?;
+    conn.capabilities()?;
+    conn.select("INBOX")?;
+    conn.noop()?;
+    conn.logout()?;
+
+    Ok(())
+}
+
+fn ping_all(cfg: Vec<ConfigEntry>) -> Result<usize, Box<Error>> {
+    let threads_num = 10;
+    let pool = ThreadPool::new(threads_num);
+    let processed = Arc::new(AtomicUsize::new(0));
+
+    cfg.into_iter().for_each(|ref e| {
+        let e = e.clone();
+        let processed = processed.clone();
+        pool.execute(move || match ping_single(&e) {
+            Ok(()) => {
+                let _ = processed.fetch_add(1, Ordering::SeqCst);
             }
-            Err(err) => {
-                error!("invalid server '{}' format: {}", server, err);
-                continue;
-            }
-        };
+            Err(e) => error!("{}", e),
+        })
+    });
 
-        let ssl_connector = TlsConnector::builder().unwrap().build().unwrap();
-        let mut conn = match Client::secure_connect(addr, addr.0, &ssl_connector) {
-            Ok(c) => c,
-            Err(err) => {
-                error!("couldn't connect to {}: {}", server, err);
-                continue;
-            }
-        };
+    pool.join();
 
-        if let Err(err) = conn.login(user, password) {
-            error!("login error for {}: {:?}", user, err);
-            continue;
-        }
-
-        match conn.capabilities() {
-            Ok(capabilities) => {
-                for capability in capabilities.iter() {
-                    debug!("{}", capability);
-                }
-            }
-            Err(e) => {
-                error!("error parsing capabilities: {}", e);
-                continue;
-            }
-        };
-
-        match conn.select("INBOX") {
-            Ok(mailbox) => {
-                debug!("selected INBOX. {}", mailbox);
-            }
-            Err(e) => {
-                error!("error selecting INBOX: {}", e);
-                continue;
-            }
-        };
-
-        if let Err(err) = conn.noop() {
-            error!("'noop' command failed: {}", err);
-            continue;
-        };
-
-        if let Err(err) = conn.logout() {
-            error!("logout error for {}: {}", user, err);
-            continue;
-        }
-
-        processed += 1;
-    }
-
-    processed
+    Ok(processed.load(Ordering::SeqCst))
 }
 
 fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
@@ -185,12 +160,13 @@ fn main() {
 
     match read_config_file(config_file.as_str()) {
         Ok(config) => {
-            let processed = ping(&config);
-            println!(
-                "succesfully processed {} entries out of {}",
-                processed,
-                config.len()
-            );
+            let total = config.len();
+            if let Ok(processed) = ping_all(config) {
+                println!(
+                    "succesfully processed {} entries out of {}",
+                    processed, total
+                );
+            }
         }
         Err(err) => {
             error!(
