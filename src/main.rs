@@ -58,9 +58,8 @@ fn ping_single(e: &ConfigEntry) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-fn ping_all(cfg: Vec<ConfigEntry>) -> Result<usize, Box<Error>> {
-    let threads_num = 10;
-    let pool = ThreadPool::new(threads_num);
+fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Box<Error>> {
+    let pool = ThreadPool::new(workers);
     let processed = Arc::new(AtomicUsize::new(0));
 
     cfg.into_iter().for_each(|ref e| {
@@ -118,6 +117,14 @@ fn main() {
                 .takes_value(true)
                 .help("path to the configuration file"),
         )
+        .arg(
+            Arg::with_name("workers")
+                .short("w")
+                .long("workers")
+                .takes_value(true)
+                .default_value("10")
+                .help("number of workers"),
+        )
         .get_matches();
 
     let config_file = if matches.is_present("config") {
@@ -129,6 +136,14 @@ fn main() {
                 error!("error getting env. variable $HOME: {:?}", e);
                 process::exit(-1);
             }
+        }
+    };
+
+    let workers = match matches.value_of("workers").unwrap().parse::<usize>() {
+        Ok(workers) => workers,
+        Err(err) => {
+            error!("couldn't parse number of workers: {}", err);
+            process::exit(-1);
         }
     };
 
@@ -161,7 +176,7 @@ fn main() {
     match read_config_file(config_file.as_str()) {
         Ok(config) => {
             let total = config.len();
-            if let Ok(processed) = ping_all(config) {
+            if let Ok(processed) = ping_all(config, workers) {
                 println!(
                     "succesfully processed {} entries out of {}",
                     processed, total
