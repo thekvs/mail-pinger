@@ -10,14 +10,15 @@ extern crate native_tls;
 extern crate serde;
 extern crate serde_yaml;
 extern crate threadpool;
+#[macro_use]
+extern crate failure;
 
 use clap::{App, Arg};
+use failure::Error;
 use imap::client::Client;
 use native_tls::TlsConnector;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::{
-    env, error::Error, fs::File, os::unix::fs::PermissionsExt, path::Path, process, sync::Arc,
-};
+use std::{env, fs::File, os::unix::fs::PermissionsExt, path::Path, process, sync::Arc};
 use threadpool::ThreadPool;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,7 +28,7 @@ struct ConfigEntry {
     password: String,
 }
 
-fn read_config_file<P>(path: P) -> Result<Vec<ConfigEntry>, Box<Error>>
+fn read_config_file<P>(path: P) -> Result<Vec<ConfigEntry>, Error>
 where
     P: AsRef<Path>,
 {
@@ -37,7 +38,7 @@ where
     Ok(cfg)
 }
 
-fn ping_single(e: &ConfigEntry) -> Result<(), Box<Error>> {
+fn ping_single(e: &ConfigEntry) -> Result<(), Error> {
     let server = e.server.as_str();
     let user = e.user.as_str();
     let password = e.password.as_str();
@@ -58,7 +59,7 @@ fn ping_single(e: &ConfigEntry) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Box<Error>> {
+fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Error> {
     let pool = ThreadPool::new(workers);
     let processed = Arc::new(AtomicUsize::new(0));
 
@@ -69,7 +70,7 @@ fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Box<Error>> 
             Ok(()) => {
                 let _ = processed.fetch_add(1, Ordering::SeqCst);
             }
-            Err(e) => error!("{}", e),
+            Err(err) => error!("{}@{}: {}", e.user, e.server, err),
         })
     });
 
@@ -78,29 +79,29 @@ fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Box<Error>> 
     Ok(processed.load(Ordering::SeqCst))
 }
 
-fn split_host_port(hostport: &str) -> Result<(&str, &str), &'static str> {
+fn split_host_port(hostport: &str) -> Result<(&str, &str), Error> {
     match hostport.rfind(':') {
         Some(pos) => {
             if hostport.chars().nth(0) == Some('[') {
                 match hostport.rfind(']') {
-                    Some(end) if end + 1 == hostport.len() => Err("missing port"),
+                    Some(end) if end + 1 == hostport.len() => Err(format_err!("missing port")),
                     Some(end) if end + 1 == pos => Ok((&hostport[1..end], &hostport[end + 2..])),
                     Some(end) => if hostport.chars().nth(end + 1) == Some(':') {
-                        Err("too many colons in address")
+                        Err(format_err!("too many colons in address"))
                     } else {
-                        Err("missing port")
+                        Err(format_err!("missing port"))
                     },
-                    None => Err("missing ']' in address"),
+                    None => Err(format_err!("missing ']' in address")),
                 }
             } else {
                 let host = &hostport[0..pos];
                 match host.find(':') {
                     None => Ok((host, &hostport[pos + 1..])),
-                    _ => Err("too many colons in address"),
+                    _ => Err(format_err!("too many colons in address")),
                 }
             }
         }
-        None => Err("missing port in address"),
+        None => Err(format_err!("missing port in address")),
     }
 }
 
