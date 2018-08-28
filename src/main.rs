@@ -12,6 +12,7 @@ extern crate serde_yaml;
 extern crate threadpool;
 #[macro_use]
 extern crate failure;
+extern crate exitcode;
 
 use clap::{App, Arg};
 use failure::Error;
@@ -135,7 +136,7 @@ fn main() {
             Ok(v) => format!("{}/.config/mail-pinger/config.yaml", v),
             Err(e) => {
                 error!("error getting env. variable $HOME: {:?}", e);
-                process::exit(-1);
+                process::exit(exitcode::CONFIG);
             }
         }
     };
@@ -144,7 +145,7 @@ fn main() {
         Ok(workers) => workers,
         Err(err) => {
             error!("couldn't parse number of workers: {}", err);
-            process::exit(-1);
+            process::exit(exitcode::CONFIG);
         }
     };
 
@@ -162,7 +163,7 @@ fn main() {
                     "config file '{}' has invalid permission, must be '-rw-------'",
                     config_file
                 );
-                process::exit(-1);
+                process::exit(exitcode::NOPERM);
             };
         }
         Err(err) => {
@@ -170,7 +171,7 @@ fn main() {
                 "couldn't get config file's '{}' metadata: {}",
                 config_file, err
             );
-            process::exit(-1);
+            process::exit(exitcode::DATAERR);
         }
     };
 
@@ -189,7 +190,7 @@ fn main() {
                 "error occured while reading '{}' configuration file: {}",
                 config_file, err
             );
-            process::exit(-1);
+            process::exit(exitcode::IOERR);
         }
     }
 }
