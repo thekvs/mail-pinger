@@ -64,7 +64,7 @@ fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Error> {
     let pool = ThreadPool::new(workers);
     let processed = Arc::new(AtomicUsize::new(0));
 
-    cfg.into_iter().for_each(|ref e| {
+    for e in &cfg {
         let e = e.clone();
         let processed = processed.clone();
         pool.execute(move || match ping_single(&e) {
@@ -73,7 +73,7 @@ fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Error> {
             }
             Err(err) => error!("{}@{}: {}", e.user, e.server, err),
         })
-    });
+    }
 
     pool.join();
 
@@ -118,16 +118,14 @@ fn main() {
                 .long("config")
                 .takes_value(true)
                 .help("path to the configuration file"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("workers")
                 .short("w")
                 .long("workers")
                 .takes_value(true)
                 .default_value("10")
                 .help("number of workers"),
-        )
-        .get_matches();
+        ).get_matches();
 
     let config_file = if matches.is_present("config") {
         matches.value_of("config").unwrap().to_string()
@@ -157,7 +155,8 @@ fn main() {
                     | libc::S_IXGRP
                     | libc::S_IROTH
                     | libc::S_IWOTH
-                    | libc::S_IXOTH) > 0
+                    | libc::S_IXOTH)
+                > 0
             {
                 error!(
                     "config file '{}' has invalid permission, must be '-rw-------'",
