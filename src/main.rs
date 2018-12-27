@@ -14,7 +14,7 @@ extern crate threadpool;
 extern crate failure;
 extern crate exitcode;
 
-use clap::{App, Arg};
+use clap::{crate_authors, crate_version, App, Arg};
 use failure::Error;
 use imap::client::Client;
 use native_tls::TlsConnector;
@@ -87,11 +87,13 @@ fn split_host_port(hostport: &str) -> Result<(&str, &str), Error> {
                 match hostport.rfind(']') {
                     Some(end) if end + 1 == hostport.len() => Err(format_err!("missing port")),
                     Some(end) if end + 1 == pos => Ok((&hostport[1..end], &hostport[end + 2..])),
-                    Some(end) => if hostport.chars().nth(end + 1) == Some(':') {
-                        Err(format_err!("too many colons in address"))
-                    } else {
-                        Err(format_err!("missing port"))
-                    },
+                    Some(end) => {
+                        if hostport.chars().nth(end + 1) == Some(':') {
+                            Err(format_err!("too many colons in address"))
+                        } else {
+                            Err(format_err!("missing port"))
+                        }
+                    }
                     None => Err(format_err!("missing ']' in address")),
                 }
             } else {
@@ -109,23 +111,28 @@ fn split_host_port(hostport: &str) -> Result<(&str, &str), Error> {
 fn main() {
     env_logger::init();
 
-    let matches = App::new("mail pinger")
-        .version("0.1.0")
-        .author("Konstantin Sorokin <kvs@sigterm.ru>")
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .version(crate_version!())
+        .author(crate_authors!())
         .arg(
             Arg::with_name("config")
                 .short("c")
                 .long("config")
                 .takes_value(true)
+                .value_name("arg")
                 .help("path to the configuration file"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("workers")
                 .short("w")
                 .long("workers")
                 .takes_value(true)
+                .value_name("arg")
                 .default_value("10")
                 .help("number of workers"),
-        ).get_matches();
+        )
+        .get_matches();
 
     let config_file = if matches.is_present("config") {
         matches.value_of("config").unwrap().to_string()

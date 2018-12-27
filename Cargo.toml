@@ -2,6 +2,7 @@
 name = "mail-pinger"
 version = "0.1.0"
 authors = ["Konstantin Sorokin <kvs@sigterm.ru>"]
+description = "IMAP server pinger"
 
 [dependencies]
 clap = "2.31"
