@@ -16,7 +16,6 @@ extern crate exitcode;
 
 use clap::{crate_authors, crate_version, App, Arg};
 use failure::Error;
-use imap::client::Client;
 use native_tls::TlsConnector;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{env, fs::File, os::unix::fs::PermissionsExt, path::Path, process, sync::Arc};
@@ -48,14 +47,14 @@ fn ping_single(e: &ConfigEntry) -> Result<(), Error> {
     let port = port.parse::<u16>()?;
     let addr = (host, port);
 
-    let ssl_connector = TlsConnector::builder().unwrap().build().unwrap();
-    let mut conn = Client::secure_connect(addr, addr.0, &ssl_connector)?;
+    let ssl_connector = TlsConnector::builder().build().unwrap();
+    let client = imap::connect(addr, addr.0, &ssl_connector)?;
+    let mut session = client.login(user, password).map_err(|e| e.0)?;
 
-    conn.login(user, password)?;
-    conn.capabilities()?;
-    conn.select("INBOX")?;
-    conn.noop()?;
-    conn.logout()?;
+    session.capabilities()?;
+    session.select("INBOX")?;
+    session.noop()?;
+    session.logout()?;
 
     Ok(())
 }
