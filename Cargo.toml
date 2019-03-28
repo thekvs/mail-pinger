@@ -17,3 +17,6 @@ libc = "0.2.50"
 threadpool = "1.7.1"
 failure = "0.1.5"
 exitcode = "1.1.2"
+
+[profile.release]
+lto = true
