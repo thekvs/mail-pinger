@@ -188,6 +188,9 @@ fn main() {
                     "succesfully processed {} entries out of {}",
                     processed, total
                 );
+                if processed != total {
+                    process::exit(-1);
+                }
             }
         }
         Err(err) => {
