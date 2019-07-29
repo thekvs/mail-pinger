@@ -24,6 +24,8 @@ Some public email services will close your account if you don't use it for a lon
 
 ## Compiling
 
+[![Build Status](https://travis-ci.org/thekvs/mail-pinger.svg?branch=master)](https://travis-ci.org/thekvs/mail-pinger)
+
 You need to have Rust ecosystem installed.
 
 * `cargo build` or `cargo build --release` to build a binary.
