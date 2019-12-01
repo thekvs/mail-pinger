@@ -5,17 +5,17 @@ authors = ["Konstantin Sorokin <kvs@sigterm.ru>"]
 description = "IMAP server pinger"
 
 [dependencies]
-clap = "2.32.0"
-serde = "1.0.89"
-serde_derive = "1.0.89"
-serde_yaml = "0.8.8"
-imap = "1.0.0"
-native-tls = "0.2.2"
-log = "0.4.6"
-env_logger = "0.6.1"
-libc = "0.2.50"
+clap = "2.33.0"
+serde = "1.0.103"
+serde_derive = "1.0.103"
+serde_yaml = "0.8.11"
+imap = "1.0.2"
+native-tls = "0.2.3"
+log = "0.4.8"
+env_logger = "0.7.1"
+libc = "0.2.66"
 threadpool = "1.7.1"
-failure = "0.1.5"
+failure = "0.1.6"
 exitcode = "1.1.2"
 
 [profile.release]
