@@ -6,16 +6,16 @@ description = "IMAP server pinger"
 
 [dependencies]
 clap = "2.33.0"
-serde = "1.0.103"
-serde_derive = "1.0.103"
+serde = "1.0.106"
+serde_derive = "1.0.106"
 serde_yaml = "0.8.11"
-imap = "1.0.2"
-native-tls = "0.2.3"
+imap = "2.0.2"
+native-tls = "0.2.4"
 log = "0.4.8"
 env_logger = "0.7.1"
-libc = "0.2.66"
-threadpool = "1.7.1"
-failure = "0.1.6"
+libc = "0.2.69"
+threadpool = "1.8.0"
+failure = "0.1.8"
 exitcode = "1.1.2"
 
 [profile.release]
