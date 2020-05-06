@@ -82,7 +82,7 @@ fn ping_all(cfg: Vec<ConfigEntry>, workers: usize) -> Result<usize, Error> {
 fn split_host_port(hostport: &str) -> Result<(&str, &str), Error> {
     match hostport.rfind(':') {
         Some(pos) => {
-            if hostport.chars().nth(0) == Some('[') {
+            if hostport.starts_with('[') {
                 match hostport.rfind(']') {
                     Some(end) if end + 1 == hostport.len() => Err(format_err!("missing port")),
                     Some(end) if end + 1 == pos => Ok((&hostport[1..end], &hostport[end + 2..])),
