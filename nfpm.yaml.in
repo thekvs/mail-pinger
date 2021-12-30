@@ -1,0 +1,20 @@
+# check https://nfpm.goreleaser.com/configuration for detailed usage
+#
+name: "mail-pinger"
+arch: "amd64"
+platform: "linux"
+version: v${VERSION}.${PATCH}
+section: "default"
+priority: "extra"
+maintainer: "Konstantin Sorokin <kvs@sigterm.ru>"
+description: Utility to ping mail servers via IMAP protocol
+vendor: "Me"
+homepage: "https://github.com/thekvs/mail-pinger"
+license: "MIT"
+
+contents:
+  - src: ./target/release/mail-pinger
+    dst: /usr/local/bin/mail-pinger
+
+deb:
+  compression: xz

@@ -1,4 +1,5 @@
 INSTALLDIR:=$(shell mktemp --directory --tmpdir mail-pinger.XXXXXXXXXX)
+TMPDIR:=$(shell mktemp --directory --tmpdir mail-pinger.XXXXXXXXXX)
 
 VERSION := $(shell git describe | cut -d- -f1)
 RECORDS := $(shell git describe | grep -o "-" | wc -l)
@@ -18,26 +19,25 @@ endif
 
 clean:
 	rm -f *.deb
+	rm -rf target
 
 check_env:
-	if ! which fpm; then \
-		echo ERROR: fpm is not installed!; \
+	if ! which docker; then \
+		echo ERROR: docker is not installed!; \
 		exit 1; \
 	fi
+	curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o $(TMPDIR)/envsubst
+	chmod +x $(TMPDIR)/envsubst
 
 build: check_env
 	cargo build --release
 
 deb: clean build
-	mkdir -p $(INSTALLDIR)/usr/local/bin/
-	cp -a ./target/release/mail-pinger $(INSTALLDIR)/usr/local/bin/
-	strip --strip-all $(INSTALLDIR)/usr/local/bin/mail-pinger
-	fpm --input-type dir \
-		--output-type deb \
-		--name "mail-pinger" \
-		--version $(VERSION).$(PATCH)+$(LAST_GIT_COMMIT) \
-		--description "Mail pinger" \
-		--deb-compression xz \
-		--maintainer "Konstantin Sorokin <kvs@sigterm.ru>" \
-		--chdir $(INSTALLDIR)
-	rm -rf $(INSTALLDIR)
+	VERSION=$(VERSION) PATCH=$(PATCH) $(TMPDIR)/envsubst -i nfpm.yaml.in -o nfpm.yaml
+	docker run --user `id -u`:`id -g` \
+		--rm \
+        --volume $(PWD):/tmp/pkg \
+        --workdir /tmp/pkg \
+        goreleaser/nfpm pkg --packager deb --target .
+	rm -rf $(TMPDIR)
+	rm -f nfpm.yaml
