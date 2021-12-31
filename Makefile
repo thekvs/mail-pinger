@@ -29,10 +29,10 @@ check_env:
 	curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o $(TMPDIR)/envsubst
 	chmod +x $(TMPDIR)/envsubst
 
-build: check_env
+build:
 	cargo build --release
 
-deb: clean build
+deb: clean check_env build
 	VERSION=$(VERSION) PATCH=$(PATCH) $(TMPDIR)/envsubst -i nfpm.yaml.in -o nfpm.yaml
 	docker run --user `id -u`:`id -g` \
 		--rm \
