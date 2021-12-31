@@ -15,7 +15,7 @@ else
 endif
 
 .PHONY: clean deb build check_env
-.DEFAULT_GOAL := deb
+.DEFAULT_GOAL := build
 
 clean:
 	rm -f *.deb
