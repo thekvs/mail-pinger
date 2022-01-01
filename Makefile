@@ -1,8 +1,8 @@
-INSTALLDIR:=$(shell mktemp --directory --tmpdir mail-pinger.XXXXXXXXXX)
-TMPDIR:=$(shell mktemp --directory --tmpdir mail-pinger.XXXXXXXXXX)
+TMPDIR := $(shell mktemp --directory --tmpdir mail-pinger.XXXXXXXXXX)
 
 VERSION := $(shell git describe | cut -d- -f1)
 RECORDS := $(shell git describe | grep -o "-" | wc -l)
+
 ifeq ($(RECORDS), 2)
         PATCH := $(shell git describe | cut -d- -f2)
         LAST_GIT_COMMIT := $(shell git describe | cut -d- -f3)
@@ -34,7 +34,8 @@ build:
 
 deb: clean check_env build
 	VERSION=$(VERSION) PATCH=$(PATCH) $(TMPDIR)/envsubst -i nfpm.yaml.in -o nfpm.yaml
-	docker run --user `id -u`:`id -g` \
+	docker run \
+		--user `id -u`:`id -g` \
 		--rm \
         --volume $(PWD):/tmp/pkg \
         --workdir /tmp/pkg \
